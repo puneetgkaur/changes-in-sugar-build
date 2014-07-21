@@ -33,6 +33,33 @@ from jarabe.model import session
 from jarabe.journal.objectchooser import ObjectChooser
 
 import logging
+import random
+
+import base64
+#import pygame
+
+#import pygame.camera 
+#from pygame.locals import *
+
+from gi.repository import GObject
+from gi.repository import Gdk
+from gi.repository import Wnck
+from sugar3.graphics import style
+
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst
+# Needed for window.get_xid(), xvimagesink.set_window_handle(), respectively:
+from gi.repository import GdkX11, GstVideo
+from gi.repository import GdkPixbuf
+
+#from cordova.camera.record import Record
+
+#from mediaview import MediaView
+import cairo
+
+from gi.repository import GdkX11
+
 
 class StreamMonitor(object):
     def __init__(self):
@@ -88,6 +115,7 @@ class ActivityAPI(API):
     def _session_manager_shutdown_cb(self, event):
         self._client.send_notification("activity.stop")
 
+
     def show_object_chooser(self, request):
         chooser = ObjectChooser(self._activity)
         chooser.connect('response', self._chooser_response_cb, request)
@@ -99,125 +127,255 @@ class ActivityAPI(API):
             self._client.send_result(request, [object_id])
         else:
             self._client.send_result(request, [None])
-
         chooser.destroy()
 
-    def cordova(self,request):
-	logging.error("Reached apisocket.py cordova function")
-	class_name=request['params'][0]
-	logging.error("classname")
-	logging.error(class_name)
-        function_name=request['params'][1]
-	logging.error("function name")
-	logging.error(function_name)
-	parameters=request['params'][2]
-	logging.error("parameters:")
-	logging.error(parameters)
-	logging.error("not parameter:")
-	logging.error(not parameters)
-	#cordova=eval(class_name)()
-	cordova=getattr(cordova_classes,class_name)
-	cordova_method=getattr(cordova,"execute")
-	instance_cordova=cordova()
-	result=None
-	result=json.loads(cordova_method(instance_cordova,function_name,parameters))
-	#result=json.loads(cordova_method(function_name,parameters))
-	logging.error(result)
-	#self._client.send_result(request,result)
-	
-	#dependiing on whether twe got the result or got some error
-	#we check the value returned by the function invoked
-	
-	if result['status'] == 1 or result['status'] == 0:
-	    #call the send_result function for the client object
-	    logging.error("result.status == 0 or 1")
-	    self._client.send_result(request,json.loads(result['message']))
-	else:
-	    #call the send_error function for the client object
-	    logging.error("result not equal 0 or 1")
-	    self._client.send_error(request,json.loads(result['message']))
-	
 
-	
-class MyError(Exception):
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        return repr(self.value)
+    def cordova_camera_show_object_chooser(self, request):
+        chooser = ObjectChooser(self._activity, what_filter='Image')
+        chooser.connect('response', self.cordova_camera_chooser_response_cb, request)
+        chooser.show()
+
+    def cordova_camera_chooser_response_cb(self, chooser, response_id, request):
+        if response_id == Gtk.ResponseType.ACCEPT:
+            object_id = chooser.get_selected_object_id()
+            self._client.send_result(request, [object_id])
+        else:
+            self._client.send_result(request, [None])
+        chooser.destroy()
 
 
-class cordova_classes:
+    def camera(self,request):
+        cam=camera_recorder(self._activity)
+        cam.connect('response', self.cordova_camera_chooser_response_cb, request)
+        cam.show()
+        """
+        os.environ['SDL_VIDEO_CENTERED'] = '1'
+        pygame.init()
+	pygame.camera.init()
+        screen=pygame.display.set_mode((640,480),pygame.NOFRAME )
+        pygame.display.set_caption("Click mouse/ press a key / close window to snap a photog")
+    	camlist = pygame.camera.list_cameras()
+    	if camlist:
+            cam = pygame.camera.Camera(camlist[0],(640,480))
+	cam.start()
+        quit_loop=0
+        base64data=None
+        x=None
+        data=None
+        cam_image=cam.get_image()
+        while quit_loop == 0:
+	    cam_image=cam.get_image()
+	    screen.blit(cam_image,(0,0))
+	    pygame.display.update()
+	    for event in pygame.event.get():
+		if event.type == pygame.QUIT or  (event.type == KEYDOWN and event.key == K_ESCAPE) or (event.type == MOUSEBUTTONDOWN):
+		    #save the image
+                    data = pygame.image.tostring(screen,"RGBA")
+                    base64data = base64.b64encode(data)
+                    #logging.error("base64 :\n %s",base64data)
+		    #cam_image=cam.get_image()
+		    cam.stop()
+                    pygame.display.quit()
+                    quit_loop=1
+        logging.error("got base64 image")
+        #logging.error("base64 :\n %s",base64data)
+        pygame.image.save(cam_image,"/home/broot/Documents/image.jpg")
+        #logging.error("josn dumps base64 :\n %s",json.dumps(base64data))
+        self._client.send_result(request,base64data)
+        """
 
-    class Accelerometer:
-        def __init__(self):
-	    logging.error("accelerometer object initiated");
 
-        def execute(self,action,args):
-	
-       	    if action == "start":
-		#open the sugar build shell and cd to home and vi into a file named hello there
-	    	ACCELEROMETER_DEVICE = '/home/hello'
-	    	fh = open(ACCELEROMETER_DEVICE)
-	    	string = fh.read()
-	    	xyz = string[1:-2].split(',')
-	    	fh.close()
-	    	x=0
-	    	y=0
-	    	z=0
-	    	try:
-		    x = float(xyz[0])
-		    y = float(xyz[1])
-		    z = float(xyz[2])
-	    	except MyError as e:
-		    logging.error("error %s",e)
-	    	timestamp = time.time()
-	        result_message= json.dumps({'x':x,'y':y,'z':z,'timestamp':timestamp,'keepCallback':True})
-	        result = json.dumps({'status':1,'message':result_message})
-	        return result
-            elif action == "stop":
-	    	ACCELEROMETER_DEVICE = '/home/hello'
-	    	fh = open(ACCELEROMETER_DEVICE)
-	    	string = fh.read()
-	    	xyz = string[1:-2].split(',')
-	    	fh.close()
-	    	x=0
-	    	y=0
-	    	z=0
-	    	try:
-		    x = float(xyz[0])
-		    y = float(xyz[1])
-		    z = float(xyz[2])
-	    	except MyError as e:
-		    logging.error("error %s",e)
-	    	timestamp = time.time()
-	        result_message= json.dumps({"x":x,"y":y,"z":z,"timestamp":timestamp,"keepCallback":True})
-	        result = json.dumps({"status":1,"message":result_message})
-	        return result
-	    else:
-	        result_message= json.dumps({"x":0,"y":0,"z":0,"timestamp":0400,"keepCallback":True})
-	        result = json.dumps({"status":1,"message":result_message})
-	        return result
+
+
+    def conversionToBase64(self,request):
+	CAMERA = '/home/broot/Documents/Photo by broot.jpe'
+	fh = open(CAMERA)
+	string = fh.read()
+	fh.close()
+        logging.error("reached camera function inside apisocket.py")        
+        encoded_string = base64.b64encode(string)
+	self._client.send_result(request,encoded_string)
+
+
+
+    def accelerometer(self,request):
+        logging.error("request : %s",request)
+        timestamp = time.time()
+        self._client.send_result(request,{'x':random.uniform(1, 10),'y':random.uniform(1, 10),'z':random.uniform(1, 10),'timestamp':timestamp,'keepCallback':True})
+
+
+class camera_recorder(Gtk.Window):
+    
+    __gtype_name__ = 'camera_recorder'
+
+    __gsignals__ = {
+        'response': (GObject.SignalFlags.RUN_FIRST, None, ([int])),
+    }
+    
+    def __init__(self, parent=None): 
+        
+        Gtk.Window.__init__(self)
+        
+        self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+        #turn the following to false to avoid the gtk look
+        self.set_decorated(True)
+        self.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
+        self.set_border_width(style.LINE_WIDTH)
+        self.set_has_resize_grip(False)
+        
+        self.add_events(Gdk.EventMask.VISIBILITY_NOTIFY_MASK)
+
+        self.connect('button-press-event', self.__mouse_press_event_cb)
+        
+        if parent is None:
+            logging.warning('Cordova camera: No parent window specified')
+        else:
+            self.connect('realize', self.__realize_cb, parent)
+
+            screen = Wnck.Screen.get_default()
+            screen.connect('window-closed', self.__window_closed_cb, parent)
+        """
+        vbox = Gtk.VBox()
+        self.add(vbox)
+        vbox.show()
+       
+        self._toolbar = MainToolbox()
+        self._toolbar.set_size_request(-1, style.GRID_CELL_SIZE)
+        vbox.pack_start(self._toolbar, False, True, 0)
+        self._toolbar.show()
+        """
+        
+        self.width = Gdk.Screen.width() - style.GRID_CELL_SIZE * 2
+        self.height = Gdk.Screen.height() - style.GRID_CELL_SIZE * 2
+        self.set_size_request(self.width, self.height)
+
+
+        self.movie_window = Gtk.DrawingArea()
+        self.add(self.movie_window)  
+
+        # Create GStreamer pipeline
+        self.pipeline = Gst.Pipeline()
+
+        # Create bus to get events from GStreamer pipeline
+        self.bus = self.pipeline.get_bus()
+        self.bus.add_signal_watch()
+        self.bus.connect('message::error', self.on_error)
+               
+
+        # This is needed to make the video output in our DrawingArea:
+        self.bus.enable_sync_message_emission()
+        self.bus.connect('sync-message::element', self.on_sync_message)
+
+
+        # Create GStreamer elements
+        self.src = Gst.ElementFactory.make('autovideosrc', None)
+        self.sink = Gst.ElementFactory.make('xvimagesink', None)
+
+        # Add elements to the pipeline
+        self.pipeline.add(self.src)
+        self.pipeline.add(self.sink)
+
+        """
+        self.filesink = Gst.ElementFactory.make("filesink", None)
+        self.filesink.set_property("location", "/home/broot/sugar-build/test.jpeg")
+        self.pipeline.add(self.filesink)
+        """
+
+        self.src.link(self.sink)
+
+        self.show_all()
+        # You need to get the XID after window.show_all().  You shouldn't get it
+        # in the on_sync_message() handler because threading issues will cause
+        # segfaults there.
+        self.xid = self.movie_window.get_property('window').get_xid()
+        self.pipeline.set_state(Gst.State.PLAYING)
         
 
 
-        def getCurrentAcceleration(self,result,error,parameters=None):
-	    coordinates={5,6}
-	    result=coordinates
-	
-       	    #return if the function ran successfully
-	    #can return different values of the error and success as we 
-	    #proceed as per the logic of this python function as per
-	    #the function needs
-	    #currently keep it simple and return 1 to show success
-	    #if encounter error, assign the value of error and return 0 to denote failure
-	    #
-	    #result and error are initially before the call set to None
-	    #Now if there is any kiind of error assign the type of error to the variable error and return 0
-	    #Else assign the result and return 1
+    def on_sync_message(self, bus, msg):
+        if msg.get_structure().get_name() == 'prepare-window-handle':
+            logging.error('prepare-window-handle')
+            #msg.src.set_property('force-aspect-ratio', True)
+            msg.src.set_window_handle( self.xid)
 
-	    #iin case of success we have result key iin the json with the result value else iinicase of failure we have the error key in the json dump, the fist key isi always success to symbolize whether we have the error key or the result key, thats is whether iti was a success or a failure
-            return 1
+    def on_error(self, bus, msg):
+        print('on_error():', msg.parse_error())
+
+    def __realize_cb(self, chooser, parent):
+        logging.error("hello")
+        #self.get_window().set_transient_for(parent)    
+
+    def __window_closed_cb(self, screen, window, parent):
+        if window.get_xid() == parent.get_xid():
+            self.destroy()
+
+    def __mouse_press_event_cb(self, widget, event):
+        self.pipeline.set_state(Gst.State.PAUSED)
+        #root_win = Gdk.get_default_root_window()
+        gdk_window = Gdk.get_default_root_window()
+
+        #gdk_display = GdkX11.X11Display.get_default()
+        #gdk_window = GdkX11.X11Window.foreign_new_for_display(gdk_display,self.xid)
+
+        
+
+        width = gdk_window.get_width()
+        height = gdk_window.get_height()    
     
+        ims = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)                
+        pb = Gdk.pixbuf_get_from_window(gdk_window, 0, 0, width, height)
+        
+        cr = cairo.Context(ims)    
+        Gdk.cairo_set_source_pixbuf(cr, pb, 0, 0)     
+        cr.paint()
+
+        ims.write_to_png('/home/broot/sugar-build/testimage'+self.snapshot_name()+'.png')
+
+
+        """
+        #root_window = Gdk.get_default_root_window()
+        self.pipeline.set_state(Gst.State.PAUSED)
+        pix = Gdk.pixbuf_get_from_window(self.get_window(),0, 0,self.get_window().get_width(),self.get_window().get_height())
+
+        pix.savev('/home/broot/sugar-build/testimage.jpeg', 'jpeg', [], [])
+
+        ############
+        drawable = self.movie_window.get_window()
+        logging.error("drawable: %s : ",drawable)
+        
+        # Fetch what we rendered on the drawing area into a pixbuf
+        pixbuf = Gdk.pixbuf_get_from_window(drawable,0,0,self.width,self.height)
+        
+        # Write the pixbuf as a PNG image to disk
+        pixbuf.savev('/home/broot/sugar-build/testimage.jpeg', 'jpeg', [], [])
+        ############
+        colormap = drawable.get_colormap()
+        pixbuf = Gtk.Gdk.Pixbuf(Gtk.Gdk.COLORSPACE_RGB, 0, 8, *drawable.get_size())
+        pixbuf = pixbuf.get_from_drawable(drawable, colormap, 0,0,0,0, *drawable.get_size()) 
+        pixbuf = pixbuf.scale_simple(self.width, self.height, Gtk.Gdk.INTERP_HYPER) # resize
+        # We resize from actual window size to wanted resolution
+        # gtk.gdk.INTER_HYPER is the slowest and highest quality reconstruction function
+        # More info here : http://developer.gnome.org/pygtk/stable/class-gdkpixbuf.html#method-gdkpixbuf--scale-simple
+        filename = self.snapshot_name() + '.jpeg'
+        filepath = relpath(filename)
+        pixbuf.save('/home/broot/sugar-build/testimage.jpeg', 'jpeg')
+        #return filepath
+        """
+        self.pipeline.set_state(Gst.State.NULL)
+        self.emit('response', Gtk.ResponseType.DELETE_EVENT)
+
+    def snapshot_name(self):
+        """ Return a string of the form yyyy-mm-dd-hms """
+        from datetime import datetime
+        today = datetime.today()
+        y = str(today.year)
+        m = str(today.month)
+        d = str(today.day)
+        h = str(today.hour)
+        mi= str(today.minute)
+        s = str(today.second)
+        return '%s-%s-%s-%s%s%s' %(y, m, d, h, mi, s)
+
 
 class DatastoreAPI(API):
     def __init__(self, client):
