@@ -115,16 +115,15 @@ class ActivityAPI(API):
     def cordova_CameraPlugin(self,request):
         logging.error("cordova_camera:%s",request)
         if request['params'][0]=='webcam' :
-            result=cordova_camera.webcam_display(self,self._activity)
+            result=cordova_camera.webcam_display(self._activity)
             self._client.send_result(request,result)
         elif request['params'][0]=='image_chooser' :
-            result=cordova_camera.show_object_chooser(self._activity)
+            result=cordova_camera.show_image_chooser(self)
             self._client.send_result(request,result)
         elif request['params'][0]=='conversionToBase64':
             self._client.send_result(request,cordova_camera.conversionToBase64())
         else:
             self._client.send_result(request,"Wrong option")
-
 
 
     def cordova_DevicePlugin(self,request):

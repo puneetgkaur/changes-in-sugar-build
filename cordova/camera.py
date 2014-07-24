@@ -22,28 +22,31 @@ import cairo
 
 from jarabe.journal.objectchooser import ObjectChooser
 
-def webcam_display(parent_obj,parent_activity):
-    cam=cordova_camera.camera_recorder(parent_obj,parent_activity)
-    cam.connect('response', cordova_camera_chooser_response_cb, request)
+import logging
+
+def webcam_display(parent_activity):
+    cam=camera_recorder(parent_activity)
+    cam.connect('response', chooser_response_cb)
     cam.show()
 
 
-def chooser_response_cb(chooser, response_id, request):
+def chooser_response_cb(chooser, response_id):
     if response_id == Gtk.ResponseType.ACCEPT:
         object_id = chooser.get_selected_object_id()
         chooser.destroy()
+        logging.error(object_id)
         return object_id
     else:
         chooser.destroy()
         return None
     
 
-def show_image_chooser(parent_activity):
-    chooser = ObjectChooser(parent_activity, what_filter='Image')
+def show_image_chooser(parent):
+    chooser = ObjectChooser(parent._activity, what_filter='Image')
     chooser.connect('response', chooser_response_cb)
     chooser.show()
 
-def conversionToBase64(self,request):
+def conversionToBase64():
     CAMERA = '/home/broot/Documents/Photo by broot.jpe'
     fh = open(CAMERA)
     string = fh.read()
@@ -205,7 +208,7 @@ class camera_recorder(Gtk.Window):
             self.destroy()
 
     def __mouse_press_event_cb(self, widget, event):
-        self.glive.take_photo()
+        #self.glive.take_photo()
         """
         self.pipeline.set_state(Gst.State.PAUSED)
         #root_win = Gdk.get_default_root_window()
