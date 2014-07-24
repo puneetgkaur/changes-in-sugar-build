@@ -105,38 +105,39 @@ class ActivityAPI(API):
         else:
             self._client.send_result(request, [None])
         chooser.destroy()
-
-    def accelerometer(self,request):
+    
+    def cordova_AccelerometerPlugin(self,request):
         logging.error("request : %s",request)
         acc_obj=cordova_accelerometer.accelerometer_obj()
         self._client.send_result(request,acc_obj)
 
-    def cordova_device(self,request):
-        logging.error("cordova_device:%s",request)
-        if(request['params'][0]=='sugar_version'):
-            self._client.send_result(request,cordova_device.get_sugar_version())
-        elif(request['params'][0]=='sugar_model'):
-            self._client.send_result(request,cordova_device.get_hardware_model())
-        elif(request['params'][0]=='sugar_uuid'):
-            self._client.send_result(request,cordova_device.get_uuid())
+    
+    def cordova_CameraPlugin(self,request):
+        logging.error("cordova_camera:%s",request)
+        if request['params'][0]=='webcam' :
+            result=cordova_camera.webcam_display(self,self._activity)
+            self._client.send_result(request,result)
+        elif request['params'][0]=='image_chooser' :
+            result=cordova_camera.show_object_chooser(self._activity)
+            self._client.send_result(request,result)
+        elif request['params'][0]=='conversionToBase64':
+            self._client.send_result(request,cordova_camera.conversionToBase64())
         else:
             self._client.send_result(request,"Wrong option")
 
 
-    def cordova_camera_show_object_chooser(self, request):
-        chooser = ObjectChooser(self._activity, what_filter='Image')
-        chooser.connect('response', self.cordova_camera_chooser_response_cb, request)
-        chooser.show()
 
-
-    def cordova_camera_chooser_response_cb(self, chooser, response_id, request):
-        if response_id == Gtk.ResponseType.ACCEPT:
-            object_id = chooser.get_selected_object_id()
-            self._client.send_result(request, [object_id])
+    def cordova_DevicePlugin(self,request):
+        logging.error("cordova_device:%s",request)
+        if request['params'][0]=='sugar_version':
+            self._client.send_result(request,cordova_device.get_sugar_version())
+        elif request['params'][0]=='sugar_model':
+            self._client.send_result(request,cordova_device.get_hardware_model())
+        elif request['params'][0]=='sugar_uuid' :
+            self._client.send_result(request,cordova_device.get_uuid())
         else:
-            self._client.send_result(request, [None])
-        chooser.destroy()
-
+            self._client.send_result(request,"Wrong option")
+    
 
 class DatastoreAPI(API):
     def __init__(self, client):

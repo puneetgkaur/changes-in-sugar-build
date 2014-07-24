@@ -22,7 +22,7 @@ def get_hardware_model():
 
 
 def get_uuid():
-    uuid=get_serial_number() + "-" + get_build_number() + "-" + get_firmware_number()
+    uuid=get_serial_number()
     return uuid
 
 
