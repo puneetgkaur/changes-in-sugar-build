@@ -18,6 +18,7 @@ from gi.repository import Gst
 # Needed for window.get_xid(), xvimagesink.set_window_handle(), respectively:
 from gi.repository import GdkX11, GstVideo
 from gi.repository import GdkPixbuf
+from gi.repository import GLib
 import cairo
 
 from jarabe.journal.objectchooser import ObjectChooser
@@ -93,6 +94,13 @@ class pygame_camera:
         self._client.send_result(request,base64data)
 
 
+
+def show_camera(parent):
+    chooser = camera_recorder(parent)
+    chooser.connect('response', chooser_response_cb)
+    chooser.show()
+
+
 class camera_recorder(Gtk.Window):
     
     __gtype_name__ = 'camera_recorder'
@@ -120,7 +128,6 @@ class camera_recorder(Gtk.Window):
             logging.warning('Cordova camera: No parent window specified')
         else:
             self.connect('realize', self.__realize_cb, parent)
-
             screen = Wnck.Screen.get_default()
             screen.connect('window-closed', self.__window_closed_cb, parent)
         """
@@ -145,36 +152,64 @@ class camera_recorder(Gtk.Window):
         # Create GStreamer pipeline
         self.pipeline = Gst.Pipeline()
 
+        self._create_photobin()
+               
+
+        # Create GStreamer elements
+        self.src = Gst.ElementFactory.make("v4l2src", "camsrc")
+        """
+        caps = Gst.Caps.from_string('video/x-raw-yuv,framerate=10/1')
+        camerafilter = Gst.ElementFactory.make("capsfilter", "capsfilter")
+        camerafilter.set_property("caps", caps)
+        """        
+        srccaps = Gst.Caps.from_string('video/x-raw,framerate=10/1')
+        camerafilter1 = Gst.ElementFactory.make("capsfilter", "capsfilter")
+        camerafilter1.set_property("caps", srccaps)
+
+        rate = Gst.ElementFactory.make("videorate", 'videorate')
+
+        ratecaps = Gst.Caps.from_string('video/x-raw,framerate=10/1')        
+        camerafilter2 = Gst.ElementFactory.make("capsfilter", "capsfilter")
+        camerafilter2.set_property("caps", ratecaps)
+
+        tee = Gst.ElementFactory.make("tee", "tee")
+        queue = Gst.ElementFactory.make("queue", "dispqueue")
+        xvsink = Gst.ElementFactory.make("xvimagesink", "xsink")
+
+
+        # prefer fresh frames
+        queue.set_property("leaky", 1)
+        queue.set_property("max-size-buffers", 2)
+
+
+        # Add elements to the pipeline
+        self.pipeline.add(self.src)
+        #self.pipeline.add(camerafilter1)
+        self.pipeline.add(rate)
+        #self.pipeline.add(camerafilter2)
+        self.pipeline.add(tee)
+        self.pipeline.add(queue)
+        self.pipeline.add(xvsink)
+
+        #linking the elements
+        self.src.link(rate)
+        #camerafilter1.link(rate)
+        rate.link(tee)
+        #camerafilter2.link(tee)
+        tee.link(queue)
+        queue.link(xvsink)
+        
+
         # Create bus to get events from GStreamer pipeline
         self.bus = self.pipeline.get_bus()
         self.bus.add_signal_watch()
         self.bus.connect('message::error', self.on_error)
-               
+
 
         # This is needed to make the video output in our DrawingArea:
         self.bus.enable_sync_message_emission()
         self.bus.connect('sync-message::element', self.on_sync_message)
 
-
-        # Create GStreamer elements
-        self.src = Gst.ElementFactory.make('autovideosrc', None)
-        self.sink = Gst.ElementFactory.make('xvimagesink', None)
-
-        # Add elements to the pipeline
-        self.pipeline.add(self.src)
-        self.pipeline.add(self.sink)
-
-        
-        ########
-        """
-        self.filesink = Gst.ElementFactory.make("filesink", None)
-        self.filesink.set_property("location", "/home/broot/sugar-build/test.jpeg")
-        self.pipeline.add(self.filesink)
-        """
-        ########
-        
-
-        self.src.link(self.sink)
 
         self.show_all()
         # You need to get the XID after window.show_all().  You shouldn't get it
@@ -182,18 +217,94 @@ class camera_recorder(Gtk.Window):
         # segfaults there.
         self.xid = self.movie_window.get_property('window').get_xid()
         self.pipeline.set_state(Gst.State.PLAYING)
-        """
-        self.glive = Glive(self.activity,parent_obj)
-        pad = self.glive._photobin.get_static_pad("sink")
-        self.glive._pipeline.add(self.glive._photobin)
-        self.glive._photobin.set_state(Gst.STATE_PLAYING)
-        self.glive._pipeline.get_by_name("tee").link(self.glive._photobin)        
-        """
+
+
+    def _create_photobin(self):
+        
+        queue = Gst.ElementFactory.make("queue", "pbqueue")
+        queue.set_property("leaky", 1)
+        queue.set_property("max-size-buffers", 1)
+        
+        colorspace = Gst.ElementFactory.make("videoconvert", "pbcolorspace")
+        jpeg = Gst.ElementFactory.make("jpegenc", "pbjpeg")
+        
+        sink = Gst.ElementFactory.make("fakesink", "pbsink")
+        sink.connect("handoff", self._photo_handoff)
+        sink.set_property("signal-handoffs", True)
+        
+        self._photobin = Gst.Bin()
+        self._photobin.set_name('photobin')
+        
+        self._photobin.add(queue)
+        self._photobin.add(colorspace)
+        self._photobin.add(jpeg)
+        self._photobin.add(sink)
+        
+        queue.link(colorspace)
+        colorspace.link(jpeg)
+        jpeg.link(sink)
+        
+        pad = queue.get_static_pad("sink")
+        self._photobin.add_pad(Gst.GhostPad.new("sink", pad))
+ 
+
+    def _take_photo(self):
+        logging.error("Reached HEre in _take_photo 1")
+        self.pipeline.add(self._photobin)
+        logging.error("Reached HEre in _take_photo 2")
+        self.pipeline.get_by_name("tee").link(self._photobin)
+        self._photobin.set_state(Gst.State.PLAYING)
+
+    def _photo_handoff(self, fsink, buffer, pad, user_data=None):
+        """Generates the file for photography."""
+        logging.error("self=%s",self)
+        logging.error("Reached n photo handoff")
+        self.pipeline.get_by_name("tee").unlink(self._photobin)
+        self.pipeline.remove(self._photobin)
+        
+        #self.pic_exposure_open = False
+        #self.pipeline.set_state(Gst.State.PAUSED)
+        #root_win = Gdk.get_default_root_window()
+        #gdk_window = Gdk.get_default_root_window()
+
+        self.pipeline.set_state(Gst.State.NULL)
+        
+        pic = GdkPixbuf.PixbufLoader.new_with_mime_type("image/jpeg")
+        # FIXME: TypeError: Must be sequence, not Buffer
+        pic.write( buffer )
+        pic.close()
+        pixBuf = pic.get_pixbuf()
+        del pic
+        self.save_photo(pixBuf)
+        
+        # FIXME: Must provide a pixbuf here.
+        # Attempt to modify the functions to get through
+        # gdkpixbufsink as in the pictures, but there was
+        # no success, so this pixbuf temporarily assigned
+        # to find a solution to this problem.
+        #path = os.path.dirname(__file__)
+        #pix_file = os.path.join(path, 'gfx', 'media-circle.png')
+        #self.thumbBuf = GdkPixbuf.Pixbuf.new_from_file(pix_file)        
+        #self.save_photo(self.thumbBuf)
+        
+        drawable = self.get_window()
+        #logging.error("drawable: %s : ",drawable)
+        
+        # Fetch what we rendered on the drawing area into a pixbuf
+        pixbuf = Gdk.pixbuf_get_from_window(drawable,0,0,self.width,self.height)
+        
+        # Write the pixbuf as a PNG image to disk
+        pixbuf.savev('/home/broot/sugar-build/puneet'+self.snapshot_name()+'.jpeg', [], [])
+        
+
+    def save_photo(self, pixbuf):
+        pixbuf.savev("/home/broot/sugar-build/hellohellotesting"+self.snapshot_name() + ".jpeg", [], [])
+
 
     def on_sync_message(self, bus, msg):
         if msg.get_structure().get_name() == 'prepare-window-handle':
             logging.error('prepare-window-handle')
-            #msg.src.set_property('force-aspect-ratio', True)
+            msg.src.set_property('force-aspect-ratio', True)
             msg.src.set_window_handle( self.xid)
 
     def on_error(self, bus, msg):
@@ -201,13 +312,19 @@ class camera_recorder(Gtk.Window):
 
     def __realize_cb(self, chooser, parent):
         logging.error("hello")
-        #self.get_window().set_transient_for(parent)    
+        self.get_window().set_transient_for(parent)    
 
     def __window_closed_cb(self, screen, window, parent):
         if window.get_xid() == parent.get_xid():
             self.destroy()
 
+    def __delete_event_cb(self, chooser, event):
+        self.emit('response', Gtk.ResponseType.DELETE_EVENT)
+
+
     def __mouse_press_event_cb(self, widget, event):
+        self._take_photo()
+        self.emit('response', Gtk.ResponseType.DELETE_EVENT)
         #self.glive.take_photo()
         """
         self.pipeline.set_state(Gst.State.PAUSED)
@@ -231,9 +348,9 @@ class camera_recorder(Gtk.Window):
 
         ims.write_to_png('/home/broot/sugar-build/testimage'+self.snapshot_name()+'.png')
         """
-        """
+        
         ############
-
+        """
         #root_window = Gdk.get_default_root_window()
         self.pipeline.set_state(Gst.State.PAUSED)
         pix = Gdk.pixbuf_get_from_window(self.get_window(),0, 0,self.get_window().get_width(),self.get_window().get_height())
@@ -262,8 +379,7 @@ class camera_recorder(Gtk.Window):
         pixbuf.save('/home/broot/sugar-build/testimage.jpeg', 'jpeg')
         #return filepath
         """
-        self.pipeline.set_state(Gst.State.NULL)
-        self.emit('response', Gtk.ResponseType.DELETE_EVENT)
+
 
     def snapshot_name(self):
         """ Return a string of the form yyyy-mm-dd-hms """

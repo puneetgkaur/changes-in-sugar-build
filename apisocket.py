@@ -38,6 +38,8 @@ from jarabe.cordova import device as cordova_device
 from jarabe.cordova import accelerometer as cordova_accelerometer
 from jarabe.cordova import camera as cordova_camera
 
+#import jarabe.cordovarecord.record as cordova_record1
+
 class StreamMonitor(object):
     def __init__(self):
         self.on_data = None
@@ -115,8 +117,9 @@ class ActivityAPI(API):
     def cordova_CameraPlugin(self,request):
         logging.error("cordova_camera:%s",request)
         if request['params'][0]=='webcam' :
-            result=cordova_camera.webcam_display(self._activity)
-            self._client.send_result(request,result)
+            logging.error("record: %s",self._activity)
+            cordova_camera.show_camera(self._activity)
+            self._client.send_result(request,[None])
         elif request['params'][0]=='image_chooser' :
             result=cordova_camera.show_image_chooser(self)
             self._client.send_result(request,result)
