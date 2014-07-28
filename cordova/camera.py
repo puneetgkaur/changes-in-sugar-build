@@ -47,8 +47,9 @@ def show_image_chooser(parent):
     chooser.connect('response', chooser_response_cb)
     chooser.show()
 
-def conversionToBase64():
-    CAMERA = '/home/broot/Documents/Photo by broot.jpe'
+def conversionToBase64(filename):
+    #CAMERA = '/home/broot/Documents/Photo by broot.jpe'
+    CAMERA=filename
     fh = open(CAMERA)
     string = fh.read()
     fh.close()
@@ -57,9 +58,7 @@ def conversionToBase64():
     return encoded_string
 
 
-
-class pygame_camera:
-    def __init__(self,parent=None):
+def pygame_camera():
         os.environ['SDL_VIDEO_CENTERED'] = '1'
         pygame.init()
         pygame.camera.init()
@@ -89,9 +88,10 @@ class pygame_camera:
                     quit_loop=1
         logging.error("got base64 image")
         #logging.error("base64 :\n %s",base64data)
-        pygame.image.save(cam_image,"/home/broot/Documents/image.jpg")
+        filename="/home/broot/Documents/image"+snapshot_name()+".jpg"
+        pygame.image.save(cam_image,filename)
+        return filename
         #logging.error("josn dumps base64 :\n %s",json.dumps(base64data))
-        self._client.send_result(request,base64data)
 
 
 
@@ -294,11 +294,11 @@ class camera_recorder(Gtk.Window):
         pixbuf = Gdk.pixbuf_get_from_window(drawable,0,0,self.width,self.height)
         
         # Write the pixbuf as a PNG image to disk
-        pixbuf.savev('/home/broot/sugar-build/puneet'+self.snapshot_name()+'.jpeg', [], [])
+        pixbuf.savev('/home/broot/sugar-build/puneet'+snapshot_name()+'.jpeg', [], [])
         
 
     def save_photo(self, pixbuf):
-        pixbuf.savev("/home/broot/sugar-build/hellohellotesting"+self.snapshot_name() + ".jpeg", [], [])
+        pixbuf.savev("/home/broot/sugar-build/hellohellotesting"+snapshot_name() + ".jpeg", [], [])
 
 
     def on_sync_message(self, bus, msg):
@@ -346,7 +346,7 @@ class camera_recorder(Gtk.Window):
         Gdk.cairo_set_source_pixbuf(cr, pb, 0, 0)     
         cr.paint()
 
-        ims.write_to_png('/home/broot/sugar-build/testimage'+self.snapshot_name()+'.png')
+        ims.write_to_png('/home/broot/sugar-build/testimage'+snapshot_name()+'.png')
         """
         
         ############
@@ -374,23 +374,23 @@ class camera_recorder(Gtk.Window):
         # We resize from actual window size to wanted resolution
         # gtk.gdk.INTER_HYPER is the slowest and highest quality reconstruction function
         # More info here : http://developer.gnome.org/pygtk/stable/class-gdkpixbuf.html#method-gdkpixbuf--scale-simple
-        filename = self.snapshot_name() + '.jpeg'
+        filename = snapshot_name() + '.jpeg'
         filepath = relpath(filename)
         pixbuf.save('/home/broot/sugar-build/testimage.jpeg', 'jpeg')
         #return filepath
         """
 
 
-    def snapshot_name(self):
-        """ Return a string of the form yyyy-mm-dd-hms """
-        from datetime import datetime
-        today = datetime.today()
-        y = str(today.year)
-        m = str(today.month)
-        d = str(today.day)
-        h = str(today.hour)
-        mi= str(today.minute)
-        s = str(today.second)
-        return '%s-%s-%s-%s%s%s' %(y, m, d, h, mi, s)
+def snapshot_name():
+    """ Return a string of the form yyyy-mm-dd-hms """
+    from datetime import datetime
+    today = datetime.today()
+    y = str(today.year)
+    m = str(today.month)
+    d = str(today.day)
+    h = str(today.hour)
+    mi= str(today.minute)
+    s = str(today.second)
+    return '%s-%s-%s-%s%s%s' %(y, m, d, h, mi, s)
 
 

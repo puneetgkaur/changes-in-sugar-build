@@ -118,13 +118,14 @@ class ActivityAPI(API):
         logging.error("cordova_camera:%s",request)
         if request['params'][0]=='webcam' :
             logging.error("record: %s",self._activity)
-            cordova_camera.show_camera(self._activity)
-            self._client.send_result(request,[None])
+            filename=cordova_camera.pygame_camera()
+            #cordova_camera.conversionToBase64(filename)
+            self._client.send_result(request,cordova_camera.conversionToBase64(filename))
         elif request['params'][0]=='image_chooser' :
             result=cordova_camera.show_image_chooser(self)
             self._client.send_result(request,result)
         elif request['params'][0]=='conversionToBase64':
-            self._client.send_result(request,cordova_camera.conversionToBase64())
+            self._client.send_result(request,cordova_camera.conversionToBase64('/home/broot/Documents/Photo by broot.jpe'))
         else:
             self._client.send_result(request,"Wrong option")
 
