@@ -40,6 +40,8 @@ from jarabe.cordova import camera as cordova_camera
 
 #import jarabe.cordovarecord.record as cordova_record1
 
+
+
 class StreamMonitor(object):
     def __init__(self):
         self.on_data = None
@@ -119,11 +121,10 @@ class ActivityAPI(API):
         if request['params'][0]=='webcam' :
             logging.error("record: %s",self._activity)
             filename=cordova_camera.pygame_camera()
-            #cordova_camera.conversionToBase64(filename)
             self._client.send_result(request,cordova_camera.conversionToBase64(filename))
         elif request['params'][0]=='image_chooser' :
-            result=cordova_camera.show_image_chooser(self)
-            self._client.send_result(request,result)
+            image_chooser=cordova_camera.choose_image(self,request)
+            image_chooser.show_image_chooser(self)
         elif request['params'][0]=='conversionToBase64':
             self._client.send_result(request,cordova_camera.conversionToBase64('/home/broot/Documents/Photo by broot.jpe'))
         else:

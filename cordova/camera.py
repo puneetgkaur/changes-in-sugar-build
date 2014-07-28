@@ -25,27 +25,46 @@ from jarabe.journal.objectchooser import ObjectChooser
 
 import logging
 
+from sugar3.datastore import datastore
+
 def webcam_display(parent_activity):
     cam=camera_recorder(parent_activity)
-    cam.connect('response', chooser_response_cb)
+    cam.connect('response', chooser_response_cb1)
     cam.show()
 
+def chooser_response_cb1(chooser, response_id):
+    chooser.destroy()
+    return None
 
-def chooser_response_cb(chooser, response_id):
-    if response_id == Gtk.ResponseType.ACCEPT:
-        object_id = chooser.get_selected_object_id()
-        chooser.destroy()
-        logging.error(object_id)
-        return object_id
-    else:
-        chooser.destroy()
-        return None
+
+class choose_image:
+    def __init__(self,parent,request):
+        self.parent=parent
+        self.request=request
+        logging.error("in init of choose image, parent = %s",self.parent)
+        logging.error("in init of choose image, request = %s",self.request)
+
+    def chooser_response_cb(self,chooser, response_id):
+        if response_id == Gtk.ResponseType.ACCEPT:
+            object_id = chooser.get_selected_object_id()
+            selected_object=datastore.get(object_id)
+            image_path=selected_object.file_path
+            logging.error("path of image seleted : %s",image_path)
+            fh = open(image_path)
+            string = fh.read()
+            fh.close()       
+            encoded_string = base64.b64encode(string)
+            chooser.destroy()
+            logging.error("encoded string : %s",encoded_string)
+            self.parent._client.send_result(self.request,encoded_string)
+        else:
+            chooser.destroy()
+            self.parent._client.send_result(self.request,encoded_string)
     
-
-def show_image_chooser(parent):
-    chooser = ObjectChooser(parent._activity, what_filter='Image')
-    chooser.connect('response', chooser_response_cb)
-    chooser.show()
+    def show_image_chooser(self,parent):
+        chooser = ObjectChooser(parent._activity, what_filter='Image')
+        chooser.connect('response', self.chooser_response_cb)
+        chooser.show()
 
 def conversionToBase64(filename):
     #CAMERA = '/home/broot/Documents/Photo by broot.jpe'
@@ -267,8 +286,8 @@ class camera_recorder(Gtk.Window):
         #root_win = Gdk.get_default_root_window()
         #gdk_window = Gdk.get_default_root_window()
 
-        self.pipeline.set_state(Gst.State.NULL)
-        
+
+
         pic = GdkPixbuf.PixbufLoader.new_with_mime_type("image/jpeg")
         # FIXME: TypeError: Must be sequence, not Buffer
         pic.write( buffer )
@@ -276,7 +295,7 @@ class camera_recorder(Gtk.Window):
         pixBuf = pic.get_pixbuf()
         del pic
         self.save_photo(pixBuf)
-        
+        """
         # FIXME: Must provide a pixbuf here.
         # Attempt to modify the functions to get through
         # gdkpixbufsink as in the pictures, but there was
@@ -286,16 +305,7 @@ class camera_recorder(Gtk.Window):
         #pix_file = os.path.join(path, 'gfx', 'media-circle.png')
         #self.thumbBuf = GdkPixbuf.Pixbuf.new_from_file(pix_file)        
         #self.save_photo(self.thumbBuf)
-        
-        drawable = self.get_window()
-        #logging.error("drawable: %s : ",drawable)
-        
-        # Fetch what we rendered on the drawing area into a pixbuf
-        pixbuf = Gdk.pixbuf_get_from_window(drawable,0,0,self.width,self.height)
-        
-        # Write the pixbuf as a PNG image to disk
-        pixbuf.savev('/home/broot/sugar-build/puneet'+snapshot_name()+'.jpeg', [], [])
-        
+        """
 
     def save_photo(self, pixbuf):
         pixbuf.savev("/home/broot/sugar-build/hellohellotesting"+snapshot_name() + ".jpeg", [], [])
@@ -324,6 +334,7 @@ class camera_recorder(Gtk.Window):
 
     def __mouse_press_event_cb(self, widget, event):
         self._take_photo()
+        self.pipeline.set_state(Gst.State.NULL)
         self.emit('response', Gtk.ResponseType.DELETE_EVENT)
         #self.glive.take_photo()
         """
