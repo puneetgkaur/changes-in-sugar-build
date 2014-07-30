@@ -37,7 +37,7 @@ import logging
 from jarabe.cordova import device as cordova_device
 from jarabe.cordova import accelerometer as cordova_accelerometer
 from jarabe.cordova import camera as cordova_camera
-
+from jarabe.cordova import network as cordova_network
 #import jarabe.cordovarecord.record as cordova_record1
 
 
@@ -142,6 +142,11 @@ class ActivityAPI(API):
         else:
             self._client.send_result(request,"Wrong option")
     
+
+    def cordova_NetworkPlugin(self,request):
+        network_type=cordova_network.get_network_type()
+        self._client.send_result(request,network_type)
+
 
 class DatastoreAPI(API):
     def __init__(self, client):
