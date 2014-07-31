@@ -72,22 +72,24 @@ class dialog_window(Gtk.Window):
             self.connect('realize', self.__realize_cb, parent)
             screen = Wnck.Screen.get_default()
             screen.connect('window-closed', self.__window_closed_cb, parent)
-        """
+        
         vbox = Gtk.VBox()
         self.add(vbox)
         vbox.show()
-       
-        self._toolbar = MainToolbox()
-        self._toolbar.set_size_request(-1, style.GRID_CELL_SIZE)
-        vbox.pack_start(self._toolbar, False, True, 0)
-        self._toolbar.show()
-        """
+
+        title_box = TitleBox()
+        title_box.close_button.connect('clicked',
+                                       self.__close_button_clicked_cb)
+        title_box.set_size_request(-1, style.GRID_CELL_SIZE)
+        vbox.pack_start(title_box, False, True, 0)
+        title_box.show()
 
         self.width = Gdk.Screen.width() - style.GRID_CELL_SIZE * 2
         self.height = Gdk.Screen.height() - style.GRID_CELL_SIZE * 2
         self.set_size_request(self.width, self.height)
 
         self.show_all()
+
 
     def __realize_cb(self, chooser, parent):
         logging.error("hello")
@@ -104,3 +106,33 @@ class dialog_window(Gtk.Window):
     def __mouse_press_event_cb(self, widget, event):
         self.emit('response', Gtk.ResponseType.DELETE_EVENT)
       
+    def __close_button_clicked_cb(self, button):
+        self.emit('response', Gtk.ResponseType.DELETE_EVENT)
+
+
+class TitleBox(Gtk.Toolbar):
+
+    def __init__(self):
+        Gtk.Toolbar.__init__(self)
+
+        label = Gtk.Label()
+        title = _('Choose an object')
+
+        label.set_markup('<b>%s</b>' % title)
+        label.set_alignment(0, 0.5)
+        self._add_widget(label, expand=True)
+
+        self.close_button = ToolButton(icon_name='dialog-cancel')
+        self.close_button.set_tooltip(_('Close'))
+        self.insert(self.close_button, -1)
+        self.close_button.show()
+
+    def _add_widget(self, widget, expand=False):
+        tool_item = Gtk.ToolItem()
+        tool_item.set_expand(expand)
+
+        tool_item.add(widget)
+        widget.show()
+
+        self.insert(tool_item, -1)
+        tool_item.show()
