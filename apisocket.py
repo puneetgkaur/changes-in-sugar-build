@@ -38,6 +38,7 @@ from jarabe.cordova import device as cordova_device
 from jarabe.cordova import accelerometer as cordova_accelerometer
 from jarabe.cordova import camera as cordova_camera
 from jarabe.cordova import network as cordova_network
+from jarabe.cordova import dialog as cordova_dialog
 #import jarabe.cordovarecord.record as cordova_record1
 
 
@@ -134,7 +135,7 @@ class ActivityAPI(API):
     def cordova_DevicePlugin(self,request):
         logging.error("cordova_device:%s",request)
         if request['params'][0]=='sugar_version':
-            self._client.send_result(request,cordova_device.get_sugar_version())
+            self._client.send_result(request,cordova_dialog.get_sugar_version())
         elif request['params'][0]=='sugar_model':
             self._client.send_result(request,cordova_device.get_hardware_model())
         elif request['params'][0]=='sugar_uuid' :
@@ -146,6 +147,28 @@ class ActivityAPI(API):
     def cordova_NetworkPlugin(self,request):
         network_type=cordova_network.get_network_type()
         self._client.send_result(request,network_type)
+
+    def cordova_DialogPlugin(self,request):
+        logging.error("cordova_camera:%s",request)
+        if request['params'][0]=='alert' :
+            cordova_dialog.show_dialog(self._activity)
+            #logging.error("record: %s",self._activity)
+            #filename=cordova_camera.pygame_camera()
+            #self._client.send_result(request,cordova_camera.conversionToBase64(filename))
+        elif request['params'][0]=='prompt' :
+            return
+            #image_chooser=cordova_camera.choose_image(self,request)
+            #image_chooser.show_image_chooser(self)
+        elif request['params'][0]=='confirm':
+            return
+            #self._client.send_result(request,cordova_camera.conversionToBase64('/home/broot/Documents/Photo by broot.jpe'))
+        elif request['params'][0]=='beep':
+            return
+            #self._client.send_result(request,cordova_camera.conversionToBase64('/home/broot/Documents/Photo by broot.jpe'))
+        else:
+            return
+            #self._client.send_result(request,"Wrong option")
+
 
 
 class DatastoreAPI(API):
