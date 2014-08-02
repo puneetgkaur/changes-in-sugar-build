@@ -151,7 +151,13 @@ class ActivityAPI(API):
     def cordova_DialogPlugin(self,request):
         logging.error("cordova_camera:%s",request)
         if request['params'][0]=='alert' :
-            cordova_dialog.show_dialog(self._activity)
+            title=request['params'][2]
+            buttonLabel=request['params'][3][0]
+            message=request['params'][1]
+            logging.error("in cordova_DialogPlugin 1:%s",request['params'][1])
+            logging.error("in cordova_DialogPlugin 2:%s",request['params'][2])
+            logging.error("in cordova_DialogPlugin 3:%s",request['params'][3][0])
+            cordova_dialog.show_dialog(self,request,message,title,buttonLabel)
             #logging.error("record: %s",self._activity)
             #filename=cordova_camera.pygame_camera()
             #self._client.send_result(request,cordova_camera.conversionToBase64(filename))

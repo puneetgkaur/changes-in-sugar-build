@@ -37,10 +37,10 @@ from jarabe.journal.iconview import IconView
 
 def dialog_response(dialog_box, response_id):
     dialog_box.destroy()
-    return None
+    
 
-def show_dialog(parent):
-    dialog = dialog_window(parent)
+def show_dialog(parent,request,message,title,buttonLabel):
+    dialog = dialog_window(parent,request,message,title,buttonLabel)
     dialog.connect('response', dialog_response)
     dialog.show()
 
@@ -52,10 +52,14 @@ class dialog_window(Gtk.Window):
         'response': (GObject.SignalFlags.RUN_FIRST, None, ([int])),
     }
     
-    def __init__(self,parent=None): 
+    def __init__(self,parent=None,request=[None],message="write a message text here",title="Alert",buttonLabel="OK"): 
         
         Gtk.Window.__init__(self)
-        self.activity=parent
+        self.parent=parent
+        self.request=request
+        logging.error("message:%s",message)
+        logging.error("title:%s",title)
+        logging.error("button label:%s",buttonLabel)
         self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
         self.set_decorated(False)
         self.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
@@ -64,66 +68,74 @@ class dialog_window(Gtk.Window):
         
         self.add_events(Gdk.EventMask.VISIBILITY_NOTIFY_MASK)
 
-        self.connect('button-press-event', self.__mouse_press_event_cb)
         
-        if parent is None:
+        if parent._activity is None:
             logging.warning('Cordova camera: No parent window specified')
         else:
-            self.connect('realize', self.__realize_cb, parent)
+            self.connect('realize', self.__realize_cb, parent._activity)
             screen = Wnck.Screen.get_default()
-            screen.connect('window-closed', self.__window_closed_cb, parent)
+            screen.connect('window-closed', self.__window_closed_cb, parent._activity)
         
-        vbox = Gtk.VBox()
+        vbox = Gtk.VBox(spacing=10)
         self.add(vbox)
         vbox.show()
 
-        title_box = TitleBox()
+        title_box = TitleBox(title)
         title_box.close_button.connect('clicked',
                                        self.__close_button_clicked_cb)
         title_box.set_size_request(-1, style.GRID_CELL_SIZE)
         vbox.pack_start(title_box, False, True, 0)
         title_box.show()
 
-        self.width = Gdk.Screen.width() - style.GRID_CELL_SIZE * 2
-        self.height = Gdk.Screen.height() - style.GRID_CELL_SIZE * 2
-        self.set_size_request(self.width, self.height)
+        hbox = Gtk.HBox(spacing=50)
+        vbox.add(hbox)
+
+        label = Gtk.Label(message)
+        hbox.pack_start(label, True, True, 0)
+
+        button = Gtk.Button(buttonLabel)
+        button.connect("clicked", self.__done_button_clicked_cb)
+        vbox.pack_start(button, True, True, 0)
+
+        #self.width = 2*Gdk.Screen.width()/3
+        #self.height = Gdk.Screen.height()/5 #- style.GRID_CELL_SIZE * 2
+        #self.set_size_request(self.width, self.height)
 
         self.show_all()
 
 
-    def __realize_cb(self, chooser, parent):
+    def __realize_cb(self, chooser, parent_activity):
         logging.error("hello")
         self.get_window().set_transient_for(parent)    
 
     def __window_closed_cb(self, screen, window, parent):
         if window.get_xid() == parent.get_xid():
             self.destroy()
-
-    def __delete_event_cb(self, chooser, event):
-        self.emit('response', Gtk.ResponseType.DELETE_EVENT)
-
-
-    def __mouse_press_event_cb(self, widget, event):
-        self.emit('response', Gtk.ResponseType.DELETE_EVENT)
       
     def __close_button_clicked_cb(self, button):
+        logging.error("alert close button pressed - no response")
+        #self.emit('response', Gtk.ResponseType.DELETE_EVENT)
+
+
+    def __done_button_clicked_cb(self, button):
+        self.parent._client.send_result(self.request,[None])
         self.emit('response', Gtk.ResponseType.DELETE_EVENT)
 
 
 class TitleBox(Gtk.Toolbar):
 
-    def __init__(self):
+    def __init__(self,title_text):
         Gtk.Toolbar.__init__(self)
 
         label = Gtk.Label()
-        title = _('Choose an object')
+        title = _(title_text)
 
         label.set_markup('<b>%s</b>' % title)
         label.set_alignment(0, 0.5)
         self._add_widget(label, expand=True)
 
         self.close_button = ToolButton(icon_name='dialog-cancel')
-        self.close_button.set_tooltip(_('Close'))
+        #self.close_button.set_tooltip(_('Close'))
         self.insert(self.close_button, -1)
         self.close_button.show()
 
