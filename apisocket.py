@@ -157,17 +157,23 @@ class ActivityAPI(API):
             logging.error("in cordova_DialogPlugin 1:%s",request['params'][1])
             logging.error("in cordova_DialogPlugin 2:%s",request['params'][2])
             logging.error("in cordova_DialogPlugin 3:%s",request['params'][3][0])
-            cordova_dialog.show_dialog(self,request,message,title,buttonLabel)
+            cordova_dialog.show_dialog(self,request,'alert',message,title,buttonLabel)
             #logging.error("record: %s",self._activity)
             #filename=cordova_camera.pygame_camera()
             #self._client.send_result(request,cordova_camera.conversionToBase64(filename))
+        elif request['params'][0]=='confirm':
+            message=request['params'][1]
+            title=request['params'][2]
+            buttonLabel=request['params'][3]
+            logging.error("in cordova_DialogPlugin 1:%s",request['params'][1])
+            logging.error("in cordova_DialogPlugin 2:%s",request['params'][2])
+            logging.error("in cordova_DialogPlugin 3:%s",request['params'][3])
+            cordova_dialog.show_dialog(self,request,'confirm',message,title,buttonLabel)
+            #self._client.send_result(request,cordova_camera.conversionToBase64('/home/broot/Documents/Photo by broot.jpe'))
         elif request['params'][0]=='prompt' :
             return
             #image_chooser=cordova_camera.choose_image(self,request)
             #image_chooser.show_image_chooser(self)
-        elif request['params'][0]=='confirm':
-            return
-            #self._client.send_result(request,cordova_camera.conversionToBase64('/home/broot/Documents/Photo by broot.jpe'))
         elif request['params'][0]=='beep':
             return
             #self._client.send_result(request,cordova_camera.conversionToBase64('/home/broot/Documents/Photo by broot.jpe'))
