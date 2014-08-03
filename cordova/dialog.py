@@ -39,8 +39,8 @@ def dialog_response(dialog_box, response_id):
     dialog_box.destroy()
     
 
-def show_dialog(parent,request,plugin_call,message,title,buttonLabel):
-    dialog = dialog_window(parent,request,plugin_call,message,title,buttonLabel)
+def show_dialog(parent,request,plugin_call,message,title,buttonLabel,defaultText=None):
+    dialog = dialog_window(parent,request,plugin_call,message,title,buttonLabel,defaultText)
     dialog.connect('response', dialog_response)
     dialog.show()
 
@@ -52,7 +52,7 @@ class dialog_window(Gtk.Window):
         'response': (GObject.SignalFlags.RUN_FIRST, None, ([int])),
     }
     
-    def __init__(self,parent=None,request=[None],plugin_call="alert",message="write a message text here",title="Alert",buttonLabel="OK"): 
+    def __init__(self,parent=None,request=[None],plugin_call="alert",message="write a message text here",title="Alert",buttonLabel="OK",defaultText=None): 
         
         Gtk.Window.__init__(self)
         self.parent=parent
@@ -78,7 +78,7 @@ class dialog_window(Gtk.Window):
         
 
         if plugin_call == 'alert':
-            vbox = Gtk.VBox(spacing=10)
+            vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
             self.add(vbox)
             vbox.show()
 
@@ -106,7 +106,7 @@ class dialog_window(Gtk.Window):
             self.show_all()
 
         elif plugin_call == 'confirm':
-            vbox = Gtk.VBox(spacing=10)
+            vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
             self.add(vbox)
             vbox.show()
 
@@ -152,6 +152,58 @@ class dialog_window(Gtk.Window):
 
             self.show_all()            
 
+        elif plugin_call == 'prompt':
+            vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+            self.add(vbox)
+            vbox.show()
+
+            title_box = TitleBox(title)
+            title_box.close_button.connect('clicked',
+                                       self.__close_button_clicked_cb)
+            title_box.set_size_request(-1, style.GRID_CELL_SIZE)
+            vbox.pack_start(title_box, False, True, 0)
+            title_box.show()
+
+            hbox = Gtk.HBox(spacing=50)
+            vbox.add(hbox)
+
+            label = Gtk.Label(message)
+            hbox.pack_start(label, True, True, 0)
+
+            self.entry = Gtk.Entry()
+            self.entry.set_text(defaultText)
+            vbox.pack_start(self.entry, True, True, 0)
+
+            hbox2 = Gtk.HBox(spacing=50)
+            vbox.add(hbox2)
+
+            buttonLabel_number=1
+
+            logging.error("buttonLabel : %s",buttonLabel)
+            #button_labels=buttonLabel.split(",")
+
+
+            #for button_label in buttonLabel:
+            #logging.error("button labels : ")
+            #logging.error(button_labels)
+            for x in buttonLabel:
+                button = Gtk.Button(x)
+                button.connect("clicked", self.__done_button_prompt_clicked_cb,buttonLabel_number)
+                hbox2.pack_start(button, True, True, 0)
+                buttonLabel_number=buttonLabel_number+1                
+                """
+                button = Gtk.Button(button_label)
+                button.connect("clicked", self.__done_button_confirm_clicked_cb,buttonLabel_number)
+                hbox2.pack_start(button, True, True, 0)
+                buttonLabel_number=buttonLabel_number+1
+                """
+            #self.width = 2*Gdk.Screen.width()/3
+            #self.height = Gdk.Screen.height()/5 #- style.GRID_CELL_SIZE * 2
+            #self.set_size_request(self.width, self.height)
+
+            self.show_all()     
+
+
     def __realize_cb(self, chooser, parent):
         logging.error("hello")
         self.get_window().set_transient_for(parent)    
@@ -172,6 +224,14 @@ class dialog_window(Gtk.Window):
         logging.error("button pressed : %s",button.get_name())
         logging.error("number of the button pressed : %s",buttonLabel_number)
         self.parent._client.send_result(self.request,buttonLabel_number)
+        self.emit('response', Gtk.ResponseType.DELETE_EVENT)
+
+
+    def __done_button_prompt_clicked_cb(self,button,buttonLabel_number):
+        logging.error("button pressed : %s",button.get_name())
+        logging.error("number of the button pressed : %s",buttonLabel_number)
+        result={"input1":self.entry.get_text(),"buttonIndex":buttonLabel_number}
+        self.parent._client.send_result(self.request,result)
         self.emit('response', Gtk.ResponseType.DELETE_EVENT)
 
 

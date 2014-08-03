@@ -171,7 +171,15 @@ class ActivityAPI(API):
             cordova_dialog.show_dialog(self,request,'confirm',message,title,buttonLabel)
             #self._client.send_result(request,cordova_camera.conversionToBase64('/home/broot/Documents/Photo by broot.jpe'))
         elif request['params'][0]=='prompt' :
-            return
+            message=request['params'][1]
+            title=request['params'][2]
+            buttonLabel=request['params'][3]
+            defaultText=request['params'][4]
+            logging.error("in cordova_DialogPlugin 1:%s",request['params'][1])
+            logging.error("in cordova_DialogPlugin 2:%s",request['params'][2])
+            logging.error("in cordova_DialogPlugin 3:%s",request['params'][3])
+            logging.error("in cordova_DialogPlugin 4:%s",request['params'][4])
+            cordova_dialog.show_dialog(self,request,'prompt',message,title,buttonLabel,defaultText)            
             #image_chooser=cordova_camera.choose_image(self,request)
             #image_chooser.show_image_chooser(self)
         elif request['params'][0]=='beep':
