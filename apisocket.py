@@ -135,7 +135,8 @@ class ActivityAPI(API):
     def cordova_DevicePlugin(self,request):
         logging.error("cordova_device:%s",request)
         if request['params'][0]=='sugar_version':
-            self._client.send_result(request,cordova_dialog.get_sugar_version())
+            logging.error("device version : %s", cordova_device.get_sugar_version())
+            self._client.send_result(request,cordova_device.get_sugar_version())
         elif request['params'][0]=='sugar_model':
             self._client.send_result(request,cordova_device.get_hardware_model())
         elif request['params'][0]=='sugar_uuid' :
@@ -149,7 +150,6 @@ class ActivityAPI(API):
         self._client.send_result(request,network_type)
 
     def cordova_DialogPlugin(self,request):
-        logging.error("cordova_camera:%s",request)
         if request['params'][0]=='alert' :
             title=request['params'][2]
             buttonLabel=request['params'][3][0]
@@ -158,9 +158,6 @@ class ActivityAPI(API):
             logging.error("in cordova_DialogPlugin 2:%s",request['params'][2])
             logging.error("in cordova_DialogPlugin 3:%s",request['params'][3][0])
             cordova_dialog.show_dialog(self,request,'alert',message,title,buttonLabel)
-            #logging.error("record: %s",self._activity)
-            #filename=cordova_camera.pygame_camera()
-            #self._client.send_result(request,cordova_camera.conversionToBase64(filename))
         elif request['params'][0]=='confirm':
             message=request['params'][1]
             title=request['params'][2]
@@ -169,7 +166,6 @@ class ActivityAPI(API):
             logging.error("in cordova_DialogPlugin 2:%s",request['params'][2])
             logging.error("in cordova_DialogPlugin 3:%s",request['params'][3])
             cordova_dialog.show_dialog(self,request,'confirm',message,title,buttonLabel)
-            #self._client.send_result(request,cordova_camera.conversionToBase64('/home/broot/Documents/Photo by broot.jpe'))
         elif request['params'][0]=='prompt' :
             message=request['params'][1]
             title=request['params'][2]
@@ -180,14 +176,21 @@ class ActivityAPI(API):
             logging.error("in cordova_DialogPlugin 3:%s",request['params'][3])
             logging.error("in cordova_DialogPlugin 4:%s",request['params'][4])
             cordova_dialog.show_dialog(self,request,'prompt',message,title,buttonLabel,defaultText)            
-            #image_chooser=cordova_camera.choose_image(self,request)
-            #image_chooser.show_image_chooser(self)
         elif request['params'][0]=='beep':
-            return
-            #self._client.send_result(request,cordova_camera.conversionToBase64('/home/broot/Documents/Photo by broot.jpe'))
+            self._client.send_error(request,"trying to come up with this option")
         else:
-            return
-            #self._client.send_result(request,"Wrong option")
+            self._client.send_error(request,"Wrong option")
+
+
+
+    def cordova_GlobalizationPlugin(self,request):
+        if request['params'][0]=='getPreferredLanguage' :
+            self._client.send_result(request,{"value":"English"})
+        elif request['params'][0]=='getLocaleName' :
+            self._client.send_result(request,{"value":"en-US"})
+        else:
+            self._client.send_error(request,"Wrong option")
+
 
 
 
