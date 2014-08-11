@@ -28,6 +28,7 @@ def get_uuid():
 
 def get_sugar_version():
     # the version variable got from jarabe/config.py
+    logging.error("device version : %s",jarabe.config.version)
     return jarabe.config.version
 
 
