@@ -81,8 +81,8 @@ class NetworkManagerObserver(object):
         logging.error('Failed to get devices: %s', err)
 
     def _check_device(self, device_op):
-        if device_op in self._devices:
-            return
+        #if device_op in self._devices:
+        #    return
 
         nm_device = self._bus.get_object(network.NM_SERVICE, device_op)
         props = dbus.Interface(nm_device, dbus.PROPERTIES_IFACE)
@@ -92,26 +92,26 @@ class NetworkManagerObserver(object):
             logging.error("type of network connection - ethernet")
             self.type_network = "ethernet"
             #device = WiredDeviceObserver(nm_device, self._tray)
-            self._devices[device_op] = "ethernet"
+            #self._devices[device_op] = "ethernet"
         elif device_type == network.NM_DEVICE_TYPE_WIFI:
             logging.error("type of network connection - wi-fi")
             self.type_network = "wifi"
             #device = WirelessDeviceObserver(nm_device, self._tray)
-            self._devices[device_op] = "wi-fi"
+            #self._devices[device_op] = "wi-fi"
         elif device_type == network.NM_DEVICE_TYPE_OLPC_MESH:
             logging.error("type of network connection - olpc-mesh")
             self.type_network = "olpcmesh"
             #device = MeshDeviceObserver(nm_device, self._tray)
-            self._devices[device_op] = "olpc - mesh"
+            #self._devices[device_op] = "olpc - mesh"
         elif device_type == network.NM_DEVICE_TYPE_MODEM:
             logging.error("type of network connection - modem")
             self.type_network = "cellular"
             #device = GsmDeviceObserver(nm_device, self._tray)
-            self._devices[device_op] = "cellular"
+            #self._devices[device_op] = "cellular"
         else :
             logging.error("no connection")
             self.type_network = "none"            
-        self.parent._client.send_result(self.request,self.type_network)
+        #self.parent._client.send_result(self.request,self.type_network)
 
     def __device_added_cb(self, device_op):
         self._check_device(device_op)

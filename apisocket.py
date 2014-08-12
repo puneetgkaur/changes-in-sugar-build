@@ -39,9 +39,9 @@ from jarabe.cordova import accelerometer as cordova_accelerometer
 from jarabe.cordova import camera as cordova_camera
 from jarabe.cordova import network as cordova_network
 from jarabe.cordova import dialog as cordova_dialog
-#import jarabe.cordovarecord.record as cordova_record1
-import locale
-from gettext import gettext as _
+from jarabe.cordova import language as cordova_language
+
+
 
 class StreamMonitor(object):
     def __init__(self):
@@ -185,16 +185,13 @@ class ActivityAPI(API):
 
     def cordova_GlobalizationPlugin(self,request):
         if request['params'][0]=='getPreferredLanguage' :
-            self._client.send_result(request,{"value":"English"})
+            preferred_language=cordova_language.get_perferred_language()
+            logging.error("The preferred_language : %s",preferred_language)
+            self._client.send_result(request,{"value":preferred_language})
         elif request['params'][0]=='getLocaleName' :
-            path = os.path.join(os.environ.get('HOME'), '.i18n')
-            fd = open(path, 'r')
-            str_language_file=fd.read()
-            fd.close()
-            logging.error("On reading language file : %s",str_language_file)
-            _default_lang = '%s.%s' % locale.getdefaultlocale()
-            logging.error("default language : %s",_default_lang)
-            self._client.send_result(request,_default_lang)
+            locale_name=cordova_language.get_locale_name()
+            logging.error("The preferred_language : %s",locale_name)
+            self._client.send_result(request,{"value":locale_name})
         else:
             self._client.send_error(request,"Wrong option")
 
