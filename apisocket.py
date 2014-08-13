@@ -185,7 +185,7 @@ class ActivityAPI(API):
 
     def cordova_GlobalizationPlugin(self,request):
         if request['params'][0]=='getPreferredLanguage' :
-            preferred_language=cordova_language.get_perferred_language()
+            preferred_language=cordova_language.get_preferred_language()
             logging.error("The preferred_language : %s",preferred_language)
             self._client.send_result(request,{"value":preferred_language})
         elif request['params'][0]=='getLocaleName' :
