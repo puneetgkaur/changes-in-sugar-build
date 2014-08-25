@@ -41,7 +41,7 @@ from jarabe.cordova import network as cordova_network
 from jarabe.cordova import dialog as cordova_dialog
 from jarabe.cordova import language as cordova_language
 
-
+from jarabe.cordova import cordovaSocket
 
 class StreamMonitor(object):
     def __init__(self):
@@ -110,6 +110,14 @@ class ActivityAPI(API):
         else:
             self._client.send_result(request, [None])
         chooser.destroy()
+
+    def cordova(self,request):
+        plugin_name=request['params'][0]
+        service_name=request['params'][1]
+        args=request['params'][2]
+        cordova_class=cordovaSocket.callCordova()
+        result=cordova_class.call_to_cordova(plugin_name,service_name,args)
+        self._client.send_result(request,result)
     
     def cordova_AccelerometerPlugin(self,request):
         logging.error("request : %s",request)

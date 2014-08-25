@@ -4,8 +4,16 @@ import random
 import os
 import sys
 
+
+class Accelerometer(object):
+    def getCurrentAcceleration(self,args):
+        timestamp = time.time()
+        accelerometer_obj = {'x':random.uniform(1, 10),'y':random.uniform(1, 10),'z':random.uniform(1, 10),'timestamp':timestamp,'keepCallback':True}
+        return accelerometer_obj
+
+
 def accelerometer_obj():
-    """
+    
     timestamp = time.time()
     accelerometer_obj = {'x':random.uniform(1, 10),'y':random.uniform(1, 10),'z':random.uniform(1, 10),'timestamp':timestamp,'keepCallback':True}
     return accelerometer_obj
@@ -33,4 +41,4 @@ def accelerometer_obj():
         #return 0, 0, 0
         accelerometer_obj = {'x':0,'y':0,'z':0,'timestamp':timestamp,'keepCallback':True}
         return accelerometer_obj
-    
+    """
