@@ -13,7 +13,7 @@ network_type_name=None
 class Network:
 
     def alert(self,args,parent,request):
-        self._client.send_result(request,network_type_name)
+        parent._client.send_result(request,network_type_name)
 
 
 

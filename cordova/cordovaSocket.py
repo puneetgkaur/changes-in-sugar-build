@@ -7,7 +7,7 @@ import accelerometer as cordova_Accelerometer
 import camera as cordova_Camera
 import network as cordova_Network
 import dialog as cordova_Dialog
-import language as cordova_Language
+import globalization as cordova_Globalization
 
 
 #plugin={'accelerometer':{cordova_accelerometer.accelerometer_obj},'camera':{'journal':,'camera':cordova_camera.pygame_camera()},'device':{},'dialog':{},'globalization':{},'network':{}}
