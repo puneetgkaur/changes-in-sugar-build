@@ -6,10 +6,11 @@ import sys
 
 
 class Accelerometer(object):
-    def getCurrentAcceleration(self,args):
+    def getCurrentAcceleration(self,args,parent,request):
+        logging.error("ACCELEROMETER : In new function !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ")
         timestamp = time.time()
         accelerometer_obj = {'x':random.uniform(1, 10),'y':random.uniform(1, 10),'z':random.uniform(1, 10),'timestamp':timestamp,'keepCallback':True}
-        return accelerometer_obj
+        parent._client.send_result(request,accelerometer_obj)
 
 
 def accelerometer_obj():

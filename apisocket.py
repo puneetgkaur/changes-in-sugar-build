@@ -116,8 +116,7 @@ class ActivityAPI(API):
         service_name=request['params'][1]
         args=request['params'][2]
         cordova_class=cordovaSocket.callCordova()
-        result=cordova_class.call_to_cordova(plugin_name,service_name,args)
-        self._client.send_result(request,result)
+        cordova_class.call_to_cordova(plugin_name,service_name,args,self,request)
     
     def cordova_AccelerometerPlugin(self,request):
         logging.error("request : %s",request)
@@ -154,8 +153,19 @@ class ActivityAPI(API):
     
 
     def cordova_NetworkPlugin(self,request):
-        network_type=cordova_network.get_network_type(self,request)
-        #self._client.send_result(request,network_type)
+        """
+        logging.error("********cordova_NetworkPlugin**********")
+        logging.error("self:")
+        logging.error(self)
+        logging.error("request:")
+        logging.error(request)
+        network_type= cordova_network.get_network_type(self,request)
+        logging.error("*************network_type**************")
+        logging.error(network_type)
+        """
+        logging.error("cordova_network_type_name is")
+        logging.error(cordova_network.network_type_name) 
+        self._client.send_result(request,cordova_network.network_type_name)
 
     def cordova_DialogPlugin(self,request):
         if request['params'][0]=='alert' :

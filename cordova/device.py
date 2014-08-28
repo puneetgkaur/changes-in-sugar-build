@@ -13,6 +13,25 @@ _SN = 'serial-number'
 _MODEL = 'openprom/model'
 _not_available = _('Not available')
 
+class Device:
+    def sugar_version(self,args,parent,request):
+        logging.error("The sugar version is : ")
+        logging.error(jarabe.config.version)
+        parent._client.send_result(request,jarabe.config.version)
+
+    def sugar_model(self,args,parent,request):
+        settings = Gio.Settings('org.sugarlabs.extensions.aboutcomputer')
+        hardware_model = settings.get_string('hardware-model')
+        logging.error("The hardware model is : ")
+        logging.error(hardware_model)
+        parent._client.send_result(request,hardware_model)
+
+    def sugar_uuid(self,args,parent,request):
+        uuid=get_serial_number()
+        logging.error("The uuid is : ")
+        logging.error(uuid)
+        parent._client.send_result(request,uuid)
+
 
 def get_hardware_model():
     settings = Gio.Settings('org.sugarlabs.extensions.aboutcomputer')

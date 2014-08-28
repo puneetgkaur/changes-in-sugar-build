@@ -2,12 +2,12 @@
 import sys
 import logging
 
-import device as cordova_device
+import device as cordova_Device
 import accelerometer as cordova_Accelerometer
-import camera as cordova_camera
-import network as cordova_network
-import dialog as cordova_dialog
-import language as cordova_language
+import camera as cordova_Camera
+import network as cordova_Network
+import dialog as cordova_Dialog
+import language as cordova_Language
 
 
 #plugin={'accelerometer':{cordova_accelerometer.accelerometer_obj},'camera':{'journal':,'camera':cordova_camera.pygame_camera()},'device':{},'dialog':{},'globalization':{},'network':{}}
@@ -15,7 +15,7 @@ import language as cordova_language
 
 class callCordova(object):
 
-    def call_to_cordova(self,plugin_name,function_name,args):
+    def call_to_cordova(self,plugin_name,function_name,args,parent,request):
         plugin_filecode= getattr(sys.modules[__name__],"cordova_"+plugin_name)
         logging.error(plugin_filecode)
         #constructor = globals()[plugin_name]() # the class name for the plugin must be same as the plugin name
@@ -23,7 +23,7 @@ class callCordova(object):
         logging.error(plugin_class)
         service_method = getattr(plugin_class,function_name) # The service method must same as that described for the given class
         logging.error(service_method)
-        result = service_method(args) # give the parameters in args
+        result = service_method(args,parent,request) # give the parameters in args
         return result
 
 

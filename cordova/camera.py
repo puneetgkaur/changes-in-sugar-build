@@ -27,6 +27,35 @@ import logging
 
 from sugar3.datastore import datastore
 
+
+class Camera:
+
+    def conversionToBase64(self,args,parent,request):
+        logging.error("CAMERA 1: In new function !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ")
+        CAMERA = '/home/broot/Documents/Photo by broot.jpe'
+        fh = open(CAMERA)
+        string = fh.read()
+        fh.close()
+        logging.error("reached camera function inside apisocket.py")        
+        encoded_string = base64.b64encode(string)
+        parent._client.send_result(request,encoded_string)
+
+    def image_chooser(self,args,parent,request):
+        logging.error("CAMERA 2: In new function !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ")
+        chooser=choose_image(parent,request)
+        chooser.show_image_chooser(parent)        
+
+    def webcam(self,args,parent,request):
+        logging.error("CAMERA 3: In new function !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ")
+        filename=pygame_camera()
+        fh = open(filename)
+        string = fh.read()
+        fh.close()
+        logging.error("reached camera function inside apisocket.py")        
+        encoded_string = base64.b64encode(string)
+        parent._client.send_result(request,encoded_string)
+
+
 def webcam_display(parent_activity):
     cam=camera_recorder(parent_activity)
     cam.connect('response', chooser_response_cb1)

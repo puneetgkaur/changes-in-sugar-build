@@ -35,6 +35,37 @@ from jarabe.model import bundleregistry
 from jarabe.journal.iconview import IconView
 
 
+class Dialog:
+    def alert(self,args,parent,request):
+        title=args[1]
+        buttonLabel=args[2][0]
+        message=args[0]
+        logging.error("in cordova_DialogPlugin 1:%s",args[0])
+        logging.error("in cordova_DialogPlugin 2:%s",args[1])
+        logging.error("in cordova_DialogPlugin 3:%s",args[2][0])
+        show_dialog(parent,request,'alert',message,title,buttonLabel)
+
+    def confirm(self,args,parent,request):
+        message=args[0]
+        title=args[1]
+        buttonLabel=args[2]
+        logging.error("in cordova_DialogPlugin 1:%s",args[0])
+        logging.error("in cordova_DialogPlugin 2:%s",args[1])
+        logging.error("in cordova_DialogPlugin 3:%s",args[2])
+        show_dialog(parent,request,'confirm',message,title,buttonLabel)
+
+    def prompt(self,args,parent,request):
+        message=args[0]
+        title=args[1]
+        buttonLabel=args[2]
+        defaultText=args[3]
+        logging.error("in cordova_DialogPlugin 1:%s",args[0])
+        logging.error("in cordova_DialogPlugin 2:%s",args[1])
+        logging.error("in cordova_DialogPlugin 3:%s",args[2])
+        logging.error("in cordova_DialogPlugin 4:%s",args[3])
+        show_dialog(parent,request,'prompt',message,title,buttonLabel,defaultText) 
+
+
 def dialog_response(dialog_box, response_id):
     dialog_box.destroy()
     
