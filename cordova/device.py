@@ -32,7 +32,7 @@ class Device:
         logging.error(uuid)
         parent._client.send_result(request,uuid)
 
-
+"""
 def get_hardware_model():
     settings = Gio.Settings('org.sugarlabs.extensions.aboutcomputer')
     hardware_model = settings.get_string('hardware-model')
@@ -49,7 +49,7 @@ def get_sugar_version():
     # the version variable got from jarabe/config.py
     logging.error("device version : %s",jarabe.config.version)
     return jarabe.config.version
-
+"""
 
 
 def _parse_firmware_number(firmware_no):

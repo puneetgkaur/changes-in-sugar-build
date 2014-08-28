@@ -117,7 +117,9 @@ class ActivityAPI(API):
         args=request['params'][2]
         cordova_class=cordovaSocket.callCordova()
         cordova_class.call_to_cordova(plugin_name,service_name,args,self,request)
-    
+
+
+    """
     def cordova_AccelerometerPlugin(self,request):
         logging.error("request : %s",request)
         acc_obj=cordova_accelerometer.accelerometer_obj()
@@ -153,7 +155,7 @@ class ActivityAPI(API):
     
 
     def cordova_NetworkPlugin(self,request):
-        """
+        ""
         logging.error("********cordova_NetworkPlugin**********")
         logging.error("self:")
         logging.error(self)
@@ -162,7 +164,7 @@ class ActivityAPI(API):
         network_type= cordova_network.get_network_type(self,request)
         logging.error("*************network_type**************")
         logging.error(network_type)
-        """
+        ""
         logging.error("cordova_network_type_name is")
         logging.error(cordova_network.network_type_name) 
         self._client.send_result(request,cordova_network.network_type_name)
@@ -213,7 +215,7 @@ class ActivityAPI(API):
         else:
             self._client.send_error(request,"Wrong option")
 
-
+    """
 
 
 class DatastoreAPI(API):
