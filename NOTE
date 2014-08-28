@@ -1,8 +1,0 @@
-paste the cordova directory in build/out/install/lib/python2.7/site-packages/jarabe/
-
-
-so that the file inside the cordova folder can be imported by :
-
-from jarabe.cordova import device as cordova_device
-from jarabe.cordova import accelerometer as cordova_accelerometer
-from jarabe.cordova import camera as cordova_camera
